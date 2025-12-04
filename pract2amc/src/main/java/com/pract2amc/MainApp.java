@@ -6,12 +6,18 @@ import java.util.ArrayList;
 
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
+import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
@@ -84,53 +90,11 @@ public class MainApp extends Application {
         ArrayList<Punto> puntos = lector.LeePuntos();
         int [] camino= {0,1,2,3,4,5};
         ArrayList<Double> distancias= new ArrayList<>();
-        Camino prueba= new Camino(1,camino, distancias);
+        Camino prueba= new Camino(1,camino, distancias , 0);
         crearGrafica(puntos, prueba, stage);
     }
+    
     /**
-     /* * Crea una gráfica que muestra todos los puntos y resalta el par de puntos más cercanos.
-     * 
-     * @param puntosDataset Lista de todos los puntos a mostrar
-     * @param solucion Par de puntos más cercanos a resaltar
-     * @param stage Ventana donde se mostrará la gráfica
-     
-    public void crearGrafica(ArrayList<Punto> puntosDataset, ParPuntos solucion, Stage stage) {
-        NumberAxis xAxis = new NumberAxis();
-        NumberAxis yAxis = new NumberAxis();
-        LineChart<Number, Number> chart = new LineChart<>(xAxis, yAxis);
-        chart.setCreateSymbols(true); // mostrar puntos
-
-        XYChart.Series<Number, Number> puntos = new XYChart.Series<>();
-        for (Punto punto : puntosDataset) {
-            puntos.getData().add(new XYChart.Data<>(punto.getX(), punto.getY()));
-        }
-        chart.getData().add(puntos);
-        // Serie que será la línea entre los dos puntos más cercanos
-
-        Punto p1 = solucion.getP1();
-        Punto p2 = solucion.getP2();
-
-        XYChart.Series<Number, Number> linea = new XYChart.Series<>();
-        linea.getData().add(new XYChart.Data<>(p1.getX(), p1.getY()));
-        linea.getData().add(new XYChart.Data<>(p2.getX(), p2.getY()));
-        chart.getData().add(linea);
-
-        Scene scene = new Scene(chart, 1200, 800);
-        stage.setScene(scene);
-
-        // Estilo: ocultar la línea de la serie de puntos y colorear la serie de la
-        // línea
-        Platform.runLater(() -> {
-            // primera serie = puntos -> ocultar trazo (solo símbolos)
-            chart.lookupAll(".series0.chart-series-line").forEach(n -> n.setStyle("-fx-stroke: transparent;"));
-            // segunda serie = línea -> hacerla roja y gruesa
-            chart.lookupAll(".series1.chart-series-line")
-                    .forEach(n -> n.setStyle("-fx-stroke: red; -fx-stroke-width: 2;"));
-        });
-
-    }
- */
-/**
      * Crea una gráfica que muestra todos los puntos y dibuja el camino (ruta) completo.
      * * @param puntosDataset Lista de todos los puntos disponibles (referencia para los índices).
      * @param solucion Objeto Camino que contiene los índices de la ruta a trazar.
@@ -187,5 +151,89 @@ public class MainApp extends Application {
             chart.lookupAll(".series1.chart-series-line")
                     .forEach(n -> n.setStyle("-fx-stroke: red; -fx-stroke-width: 2;"));
         });
+    }
+    /**
+     * Clase auxiliar para representar una fila en la tabla.
+     * Puedes ponerla dentro de MainApp o como clase externa.
+     */
+    public static class FilaResultados {
+        private final String estrategia;
+        private final double solucion;
+        private final double tiempo;
+        private final int talla; // Opcional, por si hay varias tallas
+
+        public FilaResultados(String estrategia, double solucion, double tiempo, int talla) {
+            this.estrategia = estrategia;
+            this.solucion = solucion;
+            this.tiempo = tiempo;
+            this.talla = talla;
+        }
+
+        public String getEstrategia() { return estrategia; }
+        public double getSolucion() { return solucion; }
+        public double getTiempo() { return tiempo; }
+        public int getTalla() { return talla; }
+    }
+
+   
+    private void compararTodasLasStrategias(Stage stage, int[] Tallas,//TODO REVISSAR
+                                Camino[] exhaustivo, Camino[] poda, 
+                                Camino[] dyv, Camino[] dyvMejorado) {
+
+        Label titulo = new Label("Comparativa de Estrategias");
+        titulo.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
+
+        TableView<FilaResultados> tabla = new TableView<>();
+
+        // Columna 1: Estrategia
+        TableColumn<FilaResultados, String> colEstrategia = new TableColumn<>("Estrategia");
+        colEstrategia.setCellValueFactory(new PropertyValueFactory<>("estrategia"));
+        // Ancho sugerido
+        colEstrategia.setMinWidth(200);
+
+        // Columna 2: Solución Calculada (Distancia)
+        TableColumn<FilaResultados, String> colSolucion = new TableColumn<>("Solución Calculada");
+        colSolucion.setCellValueFactory(cell -> 
+            new SimpleStringProperty(String.format("%.4f", cell.getValue().getSolucion())));
+
+        // Columna 3: Tiempo (ms)
+        TableColumn<FilaResultados, String> colTiempo = new TableColumn<>("Tiempo (ms)");
+        colTiempo.setCellValueFactory(cell -> 
+            new SimpleStringProperty(String.format("%.6f", cell.getValue().getTiempo())));
+            
+     
+        TableColumn<FilaResultados, Integer> colTalla = new TableColumn<>("Talla");
+        colTalla.setCellValueFactory(new PropertyValueFactory<>("talla"));
+
+        tabla.getColumns().addAll(colEstrategia, colSolucion, colTiempo, colTalla);
+
+        // Rellenar datos
+        // Recorremos los arrays y creamos una fila por cada estrategia y talla
+        if (Tallas != null) {
+            for (int i = 0; i < Tallas.length; i++) {
+                int t = Tallas[i];
+                // Asegúrate de que los arrays no sean nulos y tengan datos en la posición i
+                if (exhaustivo != null && i < exhaustivo.length) 
+                    tabla.getItems().add(new FilaResultados("Exhaustivo", exhaustivo[i].getDistanciaFinal(), exhaustivo[i].getTiempo(), t));
+                
+                if (poda != null && i < poda.length) 
+                    tabla.getItems().add(new FilaResultados("Exhaustivo con Poda", poda[i].getDistanciaFinal(), poda[i].getTiempo(), t));
+                
+                if (dyv != null && i < dyv.length) 
+                    tabla.getItems().add(new FilaResultados("Divide y Vencerás", dyv[i].getDistanciaFinal(), dyv[i].getTiempo(), t));
+                
+                if (dyvMejorado != null && i < dyvMejorado.length) 
+                    tabla.getItems().add(new FilaResultados("DyV Mejorado", dyvMejorado[i].getDistanciaFinal(), dyvMejorado[i].getTiempo(), t));
+            }
+        }
+
+        Button volverBtn = new Button("Volver al menú");
+        volverBtn.setOnAction(e -> stage.setScene(crearMenu(stage)));
+
+        VBox layout = new VBox(15, titulo, tabla, volverBtn);
+        layout.setAlignment(Pos.CENTER);
+        layout.setPadding(new Insets(15));
+
+        stage.setScene(new Scene(layout, 1200, 800));
     }
 }

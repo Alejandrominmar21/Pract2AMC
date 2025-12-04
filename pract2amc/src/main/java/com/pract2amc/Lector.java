@@ -50,7 +50,7 @@ public class Lector {
                     double x = Double.parseDouble(partes[1].replace(',', '.'));
                     double y = Double.parseDouble(partes[2].replace(',', '.'));
 
-                    // System.out.println("ID: " + id + ", X: " + x + ", Y: " + y);
+                    System.out.println(" X: " + x + ", Y: " + y);
                     puntos.add(new Punto(x, y));
 
                 }

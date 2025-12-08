@@ -236,4 +236,6 @@ public class MainApp extends Application {
 
         stage.setScene(new Scene(layout, 1200, 800));
     }
+
 }
+

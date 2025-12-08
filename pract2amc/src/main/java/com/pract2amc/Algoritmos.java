@@ -2,9 +2,6 @@ package com.pract2amc;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
 
 public class Algoritmos {
 
@@ -70,7 +67,7 @@ public class Algoritmos {
         double tiempoMs = (tiempoFin - tiempoInicio) / 1_000_000.0;
 
         // Aquí podrías guardar 'distanciasCalculadas' si modificas Camino para aceptarlo
-        return new Camino(distanciaTotal, caminoIndices, distanciasPasos, tiempoMs);
+        return new Camino(distanciaTotal, caminoIndices, distanciasPasos, tiempoMs,distanciasCalculadas);
     }
 
     // =========================================================================
@@ -153,7 +150,7 @@ public class Algoritmos {
         long tiempoFin = System.nanoTime();
         double tiempoMs = (tiempoFin - tiempoInicio) / 1_000_000.0;
 
-        return new Camino(distanciaTotal, caminoIndices, distanciasPasos, tiempoMs);
+        return new Camino(distanciaTotal, caminoIndices, distanciasPasos, tiempoMs,distanciasCalculadas);
     }
 
     // =========================================================================
@@ -266,7 +263,7 @@ public class Algoritmos {
         long tiempoFin = System.nanoTime();
         double tiempoMs = (tiempoFin - tiempoInicio) / 1_000_000.0;
         
-        return new Camino(distanciaTotal, caminoIndices, distanciasPasos, tiempoMs);
+        return new Camino(distanciaTotal, caminoIndices, distanciasPasos, tiempoMs,distanciasCalculadas);
     }
     
     // =========================================================================
@@ -330,7 +327,7 @@ public class Algoritmos {
         long tiempoFin = System.nanoTime();
         double tiempoMs = (tiempoFin - tiempoInicio) / 1_000_000.0;
         
-        return new Camino(distanciaTotal, caminoIndices, distanciasPasos, tiempoMs);
+        return new Camino(distanciaTotal, caminoIndices, distanciasPasos, tiempoMs,distanciasCalculadas);
     }
 
     // Clase auxiliar y método para reutilizar la lógica de poda

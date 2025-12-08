@@ -72,7 +72,7 @@ public class MainApp extends Application {
         // Acciones al hacer clic
 
         comparar4Est.setOnAction(e -> comparar4(stage));
-         //comparar2Est.setOnAction(e -> compararDos(stage,false));
+        comparar2Est.setOnAction(e -> compararDos(stage));
         comprobarEstrategias.setOnAction(e -> compararEstrategias(stage));
           /* estudiarEstrategia.setOnAction(e -> stage.setScene(estudiarEstrategia(stage,
          * puntos)));
@@ -131,6 +131,27 @@ public class MainApp extends Application {
                 Algoritmos.vorazPodaBidireccional(puntosDataset));
 
     }
+
+    public void compararDos(Stage stage) {//TODO Cambiar para que funcione como en la 1
+       int[] Tallas = { 1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000 };
+        Camino ResultadosVorazExhaustivoUnidireccional[] = new Camino[Tallas.length];
+        Camino ResultadosVorazExhaustivoBidireccional[] = new Camino[Tallas.length];
+        
+        for (int i = 0; i < Tallas.length; i++) {
+            GeneradorTSP.crearArchivoTSP(Tallas[i], false);
+            File myObj = new File("dataset" + Tallas[i] + ".tsp");
+            Lector prueba = new Lector(myObj);
+            ArrayList<Punto> puntosDataset = prueba.LeePuntos();
+
+            ResultadosVorazExhaustivoUnidireccional[i] = Algoritmos.vorazExhaustivoUnidireccional(puntosDataset);
+            ResultadosVorazExhaustivoBidireccional[i] = Algoritmos.vorazExhaustivoBidireccional(puntosDataset);
+
+
+        }
+        compararDosEstrategias(stage, Tallas,"dada",ResultadosVorazExhaustivoUnidireccional,"dasd", ResultadosVorazExhaustivoBidireccional);
+
+    }
+
 
     /**
      * Crea una gráfica que muestra todos los puntos y dibuja el camino (ruta)
@@ -386,6 +407,126 @@ public class MainApp extends Application {
         tabla.setItems(datos);
 
         // Botón y Layout
+        Button volverBtn = new Button("Volver al menú");
+        volverBtn.setOnAction(e -> stage.setScene(crearMenu(stage)));
+
+        VBox layout = new VBox(15, titulo, tabla, volverBtn);
+        layout.setAlignment(Pos.CENTER);
+        layout.setPadding(new Insets(20));
+
+        stage.setScene(new Scene(layout, 1200, 800));
+    }
+    // --- CLASE AUXILIAR PARA COMPARACIÓN DE 2 ESTRATEGIAS ---
+    // Esta clase almacena arrays de tiempos y calculadas para poder acceder por índice de talla
+    public static class FilaComparacion {
+        private final String estrategia;
+        private final double[] tiempos;
+        private final long[] calculadas;
+
+        public FilaComparacion(String estrategia, Camino[] resultados) {
+            this.estrategia = estrategia;
+            int n = (resultados != null) ? resultados.length : 0;
+            this.tiempos = new double[n];
+            this.calculadas = new long[n];
+
+            if (resultados != null) {
+                for (int i = 0; i < n; i++) {
+                    if (resultados[i] != null) {
+                        this.tiempos[i] = resultados[i].getTiempo();
+                        this.calculadas[i] = resultados[i].getCalculadas();
+                    } else {
+                        // Valores centinela en caso de error o nulo
+                        this.tiempos[i] = 0.0;
+                        this.calculadas[i] = 0;
+                    }
+                }
+            }
+        }
+
+        public String getEstrategia() { return estrategia; }
+
+        public Double getTiempoAt(int index) {
+            if (tiempos != null && index >= 0 && index < tiempos.length) {
+                return tiempos[index];
+            }
+            return null;
+        }
+
+        public Long getCalculadasAt(int index) {
+            if (calculadas != null && index >= 0 && index < calculadas.length) {
+                return calculadas[index];
+            }
+            return null;
+        }
+    }
+
+    // --- MÉTODO PARA VISUALIZAR LA COMPARACIÓN DE 2 ESTRATEGIAS ---
+    /**
+     * Muestra una tabla comparativa para dos estrategias específicas a través de múltiples tallas.
+     * Crea columnas anidadas (Tiempo y Calculadas) para cada Talla.
+     *
+     * @param stage Ventana actual.
+     * @param tallas Array de tallas ejecutadas (ej: {100, 200, 500}).
+     * @param nombreEst1 Nombre de la primera estrategia.
+     * @param res1 Resultados (Caminos) de la primera estrategia.
+     * @param nombreEst2 Nombre de la segunda estrategia.
+     * @param res2 Resultados (Caminos) de la segunda estrategia.
+     */
+    public void compararDosEstrategias(Stage stage, int[] tallas,
+                                       String nombreEst1, Camino[] res1,
+                                       String nombreEst2, Camino[] res2) {
+
+        Label titulo = new Label("Comparación: " + nombreEst1 + " vs " + nombreEst2);
+        titulo.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
+
+        TableView<FilaComparacion> tabla = new TableView<>();
+
+        // 1. Columna Fija: Nombre de la Estrategia
+        TableColumn<FilaComparacion, String> colEstrategia = new TableColumn<>("Estrategia");
+        colEstrategia.setCellValueFactory(new PropertyValueFactory<>("estrategia"));
+        colEstrategia.setMinWidth(200);
+        tabla.getColumns().add(colEstrategia);
+
+        // 2. Columnas Dinámicas por Talla (Anidadas)
+        if (tallas != null) {
+            for (int i = 0; i < tallas.length; i++) {
+                final int index = i; // Variable final para usar en las lambdas
+                
+                // Columna Padre: Talla X
+                TableColumn<FilaComparacion, String> colTalla = new TableColumn<>("Talla " + tallas[i]);
+
+                // Sub-columna 1: Tiempo
+                TableColumn<FilaComparacion, String> colTiempo = new TableColumn<>("Tiempo (ms)");
+                colTiempo.setCellValueFactory(cell -> {
+                    Double t = cell.getValue().getTiempoAt(index);
+                    return new SimpleStringProperty(t != null ? String.format("%.4f", t) : "-");
+                });
+                colTiempo.setMinWidth(90);
+
+                // Sub-columna 2: Calculadas
+                TableColumn<FilaComparacion, String> colCalculadas = new TableColumn<>("Calculadas");
+                colCalculadas.setCellValueFactory(cell -> {
+                    Long c = cell.getValue().getCalculadasAt(index);
+                    return new SimpleStringProperty(c != null ? String.valueOf(c) : "-");
+                });
+                colCalculadas.setMinWidth(90);
+
+                // Añadir sub-columnas a la columna padre
+                colTalla.getColumns().addAll(colTiempo, colCalculadas);
+                
+                // Añadir columna padre a la tabla
+                tabla.getColumns().add(colTalla);
+            }
+        }
+
+        // Crear los datos de las filas
+        ObservableList<FilaComparacion> datos = FXCollections.observableArrayList();
+        if (res1 != null) datos.add(new FilaComparacion(nombreEst1, res1));
+        if (res2 != null) datos.add(new FilaComparacion(nombreEst2, res2));
+
+        tabla.setItems(datos);
+
+        // Botón Volver
         Button volverBtn = new Button("Volver al menú");
         volverBtn.setOnAction(e -> stage.setScene(crearMenu(stage)));
 

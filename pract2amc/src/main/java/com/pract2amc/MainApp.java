@@ -66,7 +66,7 @@ public class MainApp extends Application {
         Button comparar4Est = new Button("Comparar todas las estrategias (.tsp aleatorio)");
         Button comparar2Est = new Button("Comparar dos estrategias (.tsp aleatorio)");
         Button comprobarEstrategias = new Button("Comprobar todas las estrategias (dataset cargado)");
-        Button estudiarEstrategia = new Button("Unidireccional vs Bidireccional (.tsp aleatorio)");
+        Button uniVsBi = new Button("Unidireccional vs Bidireccional (.tsp aleatorio)");
         Button btnSalir = new Button("Salir");
 
         // Acciones al hacer clic
@@ -74,14 +74,13 @@ public class MainApp extends Application {
         comparar4Est.setOnAction(e -> comparar4(stage));
         comparar2Est.setOnAction(e -> compararDos(stage));
         comprobarEstrategias.setOnAction(e -> compararEstrategias(stage));
-          /* estudiarEstrategia.setOnAction(e -> stage.setScene(estudiarEstrategia(stage,
-         * puntos)));
-         */
+        uniVsBi.setOnAction(e ->compararUniVsBi(stage));
+       // uniVsBi.setOnAction(e -> stage.setScene(compararUniVsBi(stage)));
 
         btnSalir.setOnAction(e -> stage.close());
 
         // Organizar botones en un layout vertical
-        VBox menu = new VBox(15, comparar4Est, comparar2Est, comprobarEstrategias, estudiarEstrategia, btnSalir);
+        VBox menu = new VBox(15, comparar4Est, comparar2Est, comprobarEstrategias, uniVsBi, btnSalir);
         menu.setAlignment(Pos.CENTER);
 
         return new Scene(menu, 1200, 800);
@@ -151,6 +150,25 @@ public class MainApp extends Application {
         compararDosEstrategias(stage, Tallas,"dada",ResultadosVorazExhaustivoUnidireccional,"dasd", ResultadosVorazExhaustivoBidireccional);
 
     }
+     public void compararUniVsBi(Stage stage) {//TODO Cambiar para que funcione como en la 1
+       int[] Tallas = { 1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000 };
+        Camino ResultadosVorazExhaustivoUnidireccional[] = new Camino[Tallas.length];
+        Camino ResultadosVorazExhaustivoBidireccional[] = new Camino[Tallas.length];
+        
+        for (int i = 0; i < Tallas.length; i++) {
+            GeneradorTSP.crearArchivoTSP(Tallas[i], false);
+            File myObj = new File("dataset" + Tallas[i] + ".tsp");
+            Lector prueba = new Lector(myObj);
+            ArrayList<Punto> puntosDataset = prueba.LeePuntos();
+
+            ResultadosVorazExhaustivoUnidireccional[i] = Algoritmos.vorazExhaustivoUnidireccional(puntosDataset);
+            ResultadosVorazExhaustivoBidireccional[i] = Algoritmos.vorazExhaustivoBidireccional(puntosDataset);
+
+
+        }
+        mostrarComparacionUniVsBi(stage, Tallas,ResultadosVorazExhaustivoUnidireccional, ResultadosVorazExhaustivoBidireccional);
+
+    }   
 
 
     /**
@@ -523,6 +541,140 @@ public class MainApp extends Application {
         ObservableList<FilaComparacion> datos = FXCollections.observableArrayList();
         if (res1 != null) datos.add(new FilaComparacion(nombreEst1, res1));
         if (res2 != null) datos.add(new FilaComparacion(nombreEst2, res2));
+
+        tabla.setItems(datos);
+
+        // Botón Volver
+        Button volverBtn = new Button("Volver al menú");
+        volverBtn.setOnAction(e -> stage.setScene(crearMenu(stage)));
+
+        VBox layout = new VBox(15, titulo, tabla, volverBtn);
+        layout.setAlignment(Pos.CENTER);
+        layout.setPadding(new Insets(20));
+
+        stage.setScene(new Scene(layout, 1200, 800));
+    }
+
+    // --- CLASE AUXILIAR PARA ESTADÍSTICAS ---
+    public static class FilaEstadistica {
+        private final String estrategia;
+        private final int[] victorias;
+        private final double[] tiempos;
+
+        public FilaEstadistica(String estrategia, int[] victorias, double[] tiempos) {
+            this.estrategia = estrategia;
+            this.victorias = victorias;
+            this.tiempos = tiempos;
+        }
+
+        public String getEstrategia() { return estrategia; }
+
+        public Integer getVictoriasAt(int index) {
+            if (victorias != null && index >= 0 && index < victorias.length) {
+                return victorias[index];
+            }
+            return 0;
+        }
+
+        public Double getTiempoAt(int index) {
+            if (tiempos != null && index >= 0 && index < tiempos.length) {
+                return tiempos[index];
+            }
+            return 0.0;
+        }
+    }
+ 
+    /**
+     * Muestra la tabla comparativa calculando victorias y tiempos a partir de los objetos Camino.
+     * * @param stage Ventana actual.
+     * @param tallas Array con las tallas evaluadas.
+     * @param uni Array de objetos Camino con los resultados de la estrategia Unidireccional.
+     * @param bi Array de objetos Camino con los resultados de la estrategia Bidireccional.
+     */
+    public void mostrarComparacionUniVsBi(Stage stage, int[] tallas, 
+                                          Camino[] uni, Camino[] bi) {
+
+        Label titulo = new Label("Comparación: Unidireccional vs Bidireccional");
+        titulo.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
+
+        TableView<FilaEstadistica> tabla = new TableView<>();
+
+        // 1. Preparar los datos a partir de los arrays de Camino
+        int n = (tallas != null) ? tallas.length : 0;
+        
+        int[] winsUni = new int[n];
+        double[] timeUni = new double[n];
+        
+        int[] winsBi = new int[n];
+        double[] timeBi = new double[n];
+
+        // Procesar lógica de comparación (quién gana)
+        if (tallas != null && uni != null && bi != null) {
+            for (int i = 0; i < n; i++) {
+                // Verificar que existan datos para esa posición
+                if (i < uni.length && uni[i] != null && i < bi.length && bi[i] != null) {
+                    
+                    // Extraer tiempos
+                    timeUni[i] = uni[i].getTiempo();
+                    timeBi[i] = bi[i].getTiempo();
+
+                    // Comparar distancias para asignar victoria (con margen de error para doubles)
+                    double distUni = uni[i].getDistanciaFinal();
+                    double distBi = bi[i].getDistanciaFinal();
+                    double epsilon = 0.000001;
+
+                    if (distUni < distBi - epsilon) {
+                        winsUni[i] = 1; // Gana Uni
+                        winsBi[i] = 0;
+                    } else if (distBi < distUni - epsilon) {
+                        winsUni[i] = 0;
+                        winsBi[i] = 1; // Gana Bi
+                    } else {
+                        // Empate (opcional: ambos 0 o ambos 1, aquí ponemos 0 a victorias estrictas)
+                        winsUni[i] = 0;
+                        winsBi[i] = 0;
+                    }
+                }
+            }
+        }
+
+        // 2. Definir Columnas de la Tabla
+        // Columna Fija: Estrategia
+        TableColumn<FilaEstadistica, String> colEstrategia = new TableColumn<>("Estrategia");
+        colEstrategia.setCellValueFactory(new PropertyValueFactory<>("estrategia"));
+        colEstrategia.setMinWidth(200);
+        tabla.getColumns().add(colEstrategia);
+
+        // Columnas Dinámicas por Talla
+        if (tallas != null) {
+            for (int i = 0; i < tallas.length; i++) {
+                final int index = i; 
+                TableColumn<FilaEstadistica, String> colTalla = new TableColumn<>("Talla " + tallas[i]);
+
+                // Sub-columna: Victorias (1 o 0)
+                TableColumn<FilaEstadistica, String> colVictorias = new TableColumn<>("Gana");
+                colVictorias.setCellValueFactory(cell -> 
+                    new SimpleStringProperty(String.valueOf(cell.getValue().getVictoriasAt(index))));
+                colVictorias.setMinWidth(60);
+                colVictorias.setStyle("-fx-alignment: CENTER;");
+
+                // Sub-columna: Tiempo
+                TableColumn<FilaEstadistica, String> colTiempo = new TableColumn<>("Tiempo (ms)");
+                colTiempo.setCellValueFactory(cell -> 
+                    new SimpleStringProperty(String.format("%.4f", cell.getValue().getTiempoAt(index))));
+                colTiempo.setMinWidth(100);
+                colTiempo.setStyle("-fx-alignment: CENTER-RIGHT;");
+
+                colTalla.getColumns().addAll(colVictorias, colTiempo);
+                tabla.getColumns().add(colTalla);
+            }
+        }
+
+        // 3. Crear las filas y asignar a la tabla
+        ObservableList<FilaEstadistica> datos = FXCollections.observableArrayList(
+            new FilaEstadistica("Unidireccional", winsUni, timeUni),
+            new FilaEstadistica("Bidireccional", winsBi, timeBi)
+        );
 
         tabla.setItems(datos);
 

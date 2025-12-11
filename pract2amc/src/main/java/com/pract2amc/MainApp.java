@@ -12,16 +12,17 @@ import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.chart.LineChart;
-import javafx.scene.chart.NumberAxis;
-import javafx.scene.chart.XYChart;
+import javafx.scene.canvas.Canvas;
+import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
 public class MainApp extends Application {
@@ -235,68 +236,105 @@ btnGrafica.setOnAction(e -> menuSeleccionGrafica(stage));
         }
     }
 
+   
     /**
-     * Crea una gráfica que muestra todos los puntos y dibuja el camino (ruta)
-     * completo.
-     * * @param puntosDataset Lista de todos los puntos disponibles (referencia para
-     * los índices).
-     * 
-     * @param solucion Objeto Camino que contiene los índices de la ruta a trazar.
-     * @param stage    Ventana donde se mostrará la gráfica.
+     * Crea una visualización gráfica usando un Canvas para evitar la reordenación automática del LineChart.
+     * Dibuja los nodos escalados a la pantalla y la ruta en el orden correcto.
      */
     public void crearGrafica(ArrayList<Punto> puntosDataset, Camino solucion, Stage stage) {
-        NumberAxis xAxis = new NumberAxis();
-        NumberAxis yAxis = new NumberAxis();
+        // 1. Configuración del Lienzo (Canvas)
+        double ancho = 1200;
+        double alto = 800;
+        Canvas canvas = new Canvas(ancho, alto);
+        GraphicsContext gc = canvas.getGraphicsContext2D();
 
-        // Se definen etiquetas si es necesario, o se dejan vacías para limpieza visual
-        xAxis.setLabel("Eje X");
-        yAxis.setLabel("Eje Y");
+        // Fondo blanco
+        gc.setFill(Color.WHITE);
+        gc.fillRect(0, 0, ancho, alto);
 
-        LineChart<Number, Number> chart = new LineChart<>(xAxis, yAxis);
-        chart.setTitle("Visualización del Camino TSP");
-        chart.setCreateSymbols(true); // Mostrar los puntos (nodos)
+        // 2. Calcular límites (Min/Max) para escalar los puntos a la pantalla
+        double minX = Double.MAX_VALUE, maxX = -Double.MAX_VALUE;
+        double minY = Double.MAX_VALUE, maxY = -Double.MAX_VALUE;
 
-        // Serie 0: Todos los puntos del dataset (nube de puntos)
-        XYChart.Series<Number, Number> puntosSeries = new XYChart.Series<>();
-        puntosSeries.setName("Nodos");
-        for (Punto punto : puntosDataset) {
-            puntosSeries.getData().add(new XYChart.Data<>(punto.getX(), punto.getY()));
+        for (Punto p : puntosDataset) {
+            if (p.getX() < minX) minX = p.getX();
+            if (p.getX() > maxX) maxX = p.getX();
+            if (p.getY() < minY) minY = p.getY();
+            if (p.getY() > maxY) maxY = p.getY();
         }
 
-        // Serie 1: El camino solución (línea que conecta los puntos en orden)
-        XYChart.Series<Number, Number> caminoSeries = new XYChart.Series<>();
-        caminoSeries.setName("Ruta Solución");
+        // Márgenes para que no se pegue al borde
+        double margen = 50.0;
+        double anchoUtil = ancho - 2 * margen;
+        double altoUtil = alto - 2 * margen;
 
-        int[] indicesCamino = solucion.getCamino();
+        // Factores de escala
+        double rangoX = maxX - minX;
+        double rangoY = maxY - minY;
+        // Evitar división por cero si solo hay 1 punto
+        if (rangoX == 0) rangoX = 1;
+        if (rangoY == 0) rangoY = 1;
 
-        if (indicesCamino != null) {
-            for (int index : indicesCamino) {
-                // Validación de límites para evitar IndexOutOfBoundsException
-                if (index >= 0 && index < puntosDataset.size()) {
-                    Punto p = puntosDataset.get(index);
-                    caminoSeries.getData().add(new XYChart.Data<>(p.getX(), p.getY()));
+        // 3. Dibujar todos los puntos (Nodos) en Azul
+        gc.setFill(Color.BLUE);
+        double radioPunto = 4.0; 
+
+        for (Punto p : puntosDataset) {
+            // Transformar coordenadas reales a coordenadas de pantalla
+            double xPantalla = margen + ((p.getX() - minX) / rangoX) * anchoUtil;
+            // Invertimos Y porque en pantallas la Y crece hacia abajo, pero en mates hacia arriba
+            // (Opcional: puedes quitar el "altoUtil -" si prefieres el sistema de pantalla normal)
+            double yPantalla = margen + (altoUtil - ((p.getY() - minY) / rangoY) * altoUtil);
+
+            gc.fillOval(xPantalla - radioPunto, yPantalla - radioPunto, radioPunto * 2, radioPunto * 2);
+        }
+
+        // 4. Dibujar la Ruta (Camino) en Rojo
+        int[] camino = solucion.getCamino();
+        if (camino != null && camino.length > 0) {
+            gc.setStroke(Color.RED);
+            gc.setLineWidth(2.0);
+            gc.beginPath();
+
+            // Guardar coordenadas del primero para cerrar el ciclo al final
+            double xInicio = 0, yInicio = 0;
+
+            for (int i = 0; i < camino.length; i++) {
+                int idx = camino[i];
+                if (idx >= 0 && idx < puntosDataset.size()) {
+                    Punto p = puntosDataset.get(idx);
+                    
+                    double x = margen + ((p.getX() - minX) / rangoX) * anchoUtil;
+                    double y = margen + (altoUtil - ((p.getY() - minY) / rangoY) * altoUtil);
+
+                    if (i == 0) {
+                        gc.moveTo(x, y);
+                        xInicio = x;
+                        yInicio = y;
+                    } else {
+                        gc.lineTo(x, y);
+                    }
                 }
             }
+            
+            // IMPORTANTE: Cerrar el ciclo (volver al inicio)
+            gc.lineTo(xInicio, yInicio);
+            gc.stroke();
         }
 
-        chart.getData().add(puntosSeries);
-        chart.getData().add(caminoSeries);
+        // 5. Botón para volver
+        Button btnVolver = new Button("Volver al Menú");
+        // Colocamos el botón en una esquina
+        btnVolver.setTranslateX(10);
+        btnVolver.setTranslateY(10);
+        btnVolver.setOnAction(e -> stage.setScene(crearMenu(stage)));
 
-        Scene scene = new Scene(chart, 1200, 800);
+        // Usamos un Pane para apilar el Canvas y el Botón
+        Pane root = new Pane(canvas, btnVolver);
+        
+        // Crear la escena
+        Scene scene = new Scene(root, ancho, alto);
         stage.setScene(scene);
-
-        // Estilo CSS mediante Platform.runLater para asegurar que los nodos ya existen
-        // en el Scene Graph
-        Platform.runLater(() -> {
-            // Serie 0 (Nodos): Ocultar líneas, mostrar solo símbolos (puntos dispersos)
-            chart.lookupAll(".series0.chart-series-line").forEach(n -> n.setStyle("-fx-stroke: transparent;"));
-
-            // Serie 1 (Camino): Línea roja y gruesa para resaltar la ruta.
-            // Opcional: Ocultar símbolos de la serie 1 si se superponen demasiado, o
-            // dejarlos.
-            chart.lookupAll(".series1.chart-series-line")
-                    .forEach(n -> n.setStyle("-fx-stroke: red; -fx-stroke-width: 2;"));
-        });
     }
 
     /**
@@ -869,7 +907,7 @@ btnGrafica.setOnAction(e -> menuSeleccionGrafica(stage));
         Label lblFile = new Label("Dataset: berlin52.tsp (Por defecto)");
         Button btnCargar = new Button("Cargar otro archivo .tsp");
         // Variable para guardar el archivo seleccionado (usamos un array de 1 elemento para poder modificarlo dentro de la lambda)
-        final File[] archivoSeleccionado = { new File("berlin52.tsp") };
+        final File[] archivoSeleccionado = { new File("pract2amc/datasets/berlin52.tsp") };
         
         btnCargar.setOnAction(e -> {
             javafx.stage.FileChooser fileChooser = new javafx.stage.FileChooser();

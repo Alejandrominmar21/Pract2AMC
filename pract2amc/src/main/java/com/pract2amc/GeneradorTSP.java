@@ -94,4 +94,61 @@ public class GeneradorTSP {
             System.err.println("Error al escribir el archivo: " + e.getMessage());
         }
     }
+
+    /**
+     * Genera el fichero de solución con el formato específico de la Práctica 2.
+     * @param rutaFichero Nombre o ruta del archivo a guardar (ej: "solucion_voraz.txt")
+     * @param camino Objeto Camino con la solución calculada
+     * @param numCiudades Número total de ciudades (DIMENSION)
+     */
+    public static void guardarSolucion(String rutaFichero, Camino camino, int numCiudades) {
+        try (FileWriter writer = new FileWriter(rutaFichero)) {
+            writer.write("NAME : " + rutaFichero + "\n");
+            writer.write("TYPE : TOUR\n");
+            writer.write("DIMENSION : " + numCiudades + "\n");
+
+            // Usamos replace para asegurar el punto decimal si fuera necesario
+            writer.write("SOLUTION: " + String.format("%.2f", camino.getDistanciaFinal()).replace(',', '.') + "\n");
+            
+            writer.write("TOUR_SECTION\n");
+
+            int[] indices = camino.getCamino();
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < indices.length; i++) {
+                sb.append(indices[i] + 1); // +1 para pasar de índice 0 a etiqueta 1
+                if (i < indices.length - 1) {
+                    sb.append(",");
+                }
+            }
+            // Cerrar el ciclo visualmente añadiendo el primero al final
+            sb.append("," + (indices[0] + 1)); 
+            writer.write(sb.toString() + "\n");
+
+            ArrayList<Double> distanciasPasos = camino.getDistancias();
+            
+            for (int i = 0; i < distanciasPasos.size(); i++) {
+                // Nodos (ajustando índice base 0 a base 1)
+                int u = indices[i] + 1;
+                int v = (i == indices.length - 1) ? indices[0] + 1 : indices[i + 1] + 1;
+                
+                double coste = distanciasPasos.get(i);
+                
+                // Formateamos el coste. Si prefieres sin decimales cuando es entero, 
+                // puedes usar DecimalFormat, aquí mantengo %.2f por precisión.
+                String costeStr = String.format("%.2f", coste).replace(',', '.');
+
+                if (costeStr.endsWith(".00")) {
+                     costeStr = costeStr.substring(0, costeStr.length() - 3);
+                }
+
+                writer.write(costeStr + " - " + u + "," + v + "\n");
+            }
+
+            writer.write("EOF\n");
+            System.out.println("Fichero de solución guardado correctamente: " + rutaFichero);
+
+        } catch (IOException e) {
+            System.err.println("Error al guardar la solución: " + e.getMessage());
+        }
+    }
 }

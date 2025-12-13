@@ -36,7 +36,6 @@ public class MainApp extends Application {
         stage.show();
     }
 
- 
     public static void main(String[] args) {
         launch(args);
     }
@@ -51,6 +50,7 @@ public class MainApp extends Application {
         Button comparar2Est = new Button("Comparar dos estrategias (.tsp aleatorio)");
         Button comprobarEstrategias = new Button("Comprobar todas las estrategias (dataset cargado)");
         Button uniVsBi = new Button("Unidireccional vs Bidireccional (.tsp aleatorio)");
+        Button btnGrafica = new Button("Ver Gráfica de Algoritmo");
         Button btnSalir = new Button("Salir");
 
         // Acciones al hacer clic
@@ -59,25 +59,18 @@ public class MainApp extends Application {
         comparar2Est.setOnAction(e -> menuSeleccionCompararDos(stage));
         comprobarEstrategias.setOnAction(e -> compararEstrategias(stage));
         uniVsBi.setOnAction(e -> menuSeleccionUniVsBi(stage));
-        // En crearMenu(Stage stage) ...
-// Suponiendo que el botón es 'comparar4Est' o crea uno nuevo 'btnGrafica'
-Button btnGrafica = new Button("Ver Gráfica de Algoritmo");
-btnGrafica.setOnAction(e -> menuSeleccionGrafica(stage));
-
-// Añade btnGrafica a tu VBox del menú
-        // uniVsBi.setOnAction(e -> stage.setScene(compararUniVsBi(stage)));
-
+        btnGrafica.setOnAction(e -> menuSeleccionGrafica(stage));
         btnSalir.setOnAction(e -> stage.close());
 
         // Organizar botones en un layout vertical
-        VBox menu = new VBox(15, comparar4Est, comparar2Est, comprobarEstrategias, uniVsBi,btnGrafica, btnSalir);
+        VBox menu = new VBox(15, comparar4Est, comparar2Est, comprobarEstrategias, uniVsBi, btnGrafica, btnSalir);
         menu.setAlignment(Pos.CENTER);
 
         return new Scene(menu, 1200, 800);
     }
 
     public void comparar4(Stage stage) {
-      
+
         int[] Tallas = { 1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000 };
         Camino ResultadosVorazExhaustivoUnidireccional[] = new Camino[Tallas.length];
         Camino ResultadosVorazExhaustivoBidireccional[] = new Camino[Tallas.length];
@@ -102,7 +95,7 @@ btnGrafica.setOnAction(e -> menuSeleccionGrafica(stage));
     }
 
     public void compararEstrategias(Stage stage) {
-        Lector lector = new Lector(new File("pract2amc/datasets/berlin52.tsp"));
+        Lector lector = new Lector(new File("pract2amc/datasets/dataset_amc_1920/d657.tsp/d657.tsp"));
         ArrayList<Punto> puntosDataset = lector.LeePuntos();
 
         imprimirCompararEstrategias(stage,
@@ -166,18 +159,18 @@ btnGrafica.setOnAction(e -> menuSeleccionGrafica(stage));
 
     }
 
-    public void compararUniVsBi(Stage stage,String tipoBase, int repeticiones) {
+    public void compararUniVsBi(Stage stage, String tipoBase, int repeticiones) {
         int[] tallas;
         if (tipoBase.contains("Poda")) {
-            tallas = new int[]{500, 1000, 2000, 3000, 4000}; // Poda aguanta más
-        }else {
-            tallas = new int[]{100, 200, 300, 400, 500}; // Exhaustivo es lento, tallas menores
+            tallas = new int[] { 500, 1000, 2000, 3000, 4000 }; // Poda aguanta más
+        } else {
+            tallas = new int[] { 100, 200, 300, 400, 500 }; // Exhaustivo es lento, tallas menores
         }
 
         // Arrays para guardar los acumulados
         int[] winsUni = new int[tallas.length];
         double[] avgTimeUni = new double[tallas.length];
-        
+
         int[] winsBi = new int[tallas.length];
         double[] avgTimeBi = new double[tallas.length];
 
@@ -212,7 +205,7 @@ btnGrafica.setOnAction(e -> menuSeleccionGrafica(stage));
                     // 4. Determinar Victoria (quién tiene MENOR distancia)
                     double distUni = resUni.getDistanciaFinal();
                     double distBi = resBi.getDistanciaFinal();
-                    
+
                     // Margen de error para double
                     if (distUni < distBi - 0.0000001) {
                         winsUni[i]++;
@@ -227,7 +220,8 @@ btnGrafica.setOnAction(e -> menuSeleccionGrafica(stage));
                 avgTimeBi[i] = sumaTiempoBi / repeticiones;
             }
 
-            // Llamar a la tabla de visualización (pasamos los arrays de primitivos calculados)
+            // Llamar a la tabla de visualización (pasamos los arrays de primitivos
+            // calculados)
             mostrarComparacionUniVsBi(stage, tallas, winsUni, avgTimeUni, winsBi, avgTimeBi);
 
         } catch (Exception ex) {
@@ -236,9 +230,9 @@ btnGrafica.setOnAction(e -> menuSeleccionGrafica(stage));
         }
     }
 
-   
     /**
-     * Crea una visualización gráfica usando un Canvas para evitar la reordenación automática del LineChart.
+     * Crea una visualización gráfica usando un Canvas para evitar la reordenación
+     * automática del LineChart.
      * Dibuja los nodos escalados a la pantalla y la ruta en el orden correcto.
      */
     public void crearGrafica(ArrayList<Punto> puntosDataset, Camino solucion, Stage stage) {
@@ -257,10 +251,14 @@ btnGrafica.setOnAction(e -> menuSeleccionGrafica(stage));
         double minY = Double.MAX_VALUE, maxY = -Double.MAX_VALUE;
 
         for (Punto p : puntosDataset) {
-            if (p.getX() < minX) minX = p.getX();
-            if (p.getX() > maxX) maxX = p.getX();
-            if (p.getY() < minY) minY = p.getY();
-            if (p.getY() > maxY) maxY = p.getY();
+            if (p.getX() < minX)
+                minX = p.getX();
+            if (p.getX() > maxX)
+                maxX = p.getX();
+            if (p.getY() < minY)
+                minY = p.getY();
+            if (p.getY() > maxY)
+                maxY = p.getY();
         }
 
         // Márgenes para que no se pegue al borde
@@ -272,18 +270,22 @@ btnGrafica.setOnAction(e -> menuSeleccionGrafica(stage));
         double rangoX = maxX - minX;
         double rangoY = maxY - minY;
         // Evitar división por cero si solo hay 1 punto
-        if (rangoX == 0) rangoX = 1;
-        if (rangoY == 0) rangoY = 1;
+        if (rangoX == 0)
+            rangoX = 1;
+        if (rangoY == 0)
+            rangoY = 1;
 
         // 3. Dibujar todos los puntos (Nodos) en Azul
         gc.setFill(Color.BLUE);
-        double radioPunto = 4.0; 
+        double radioPunto = 4.0;
 
         for (Punto p : puntosDataset) {
             // Transformar coordenadas reales a coordenadas de pantalla
             double xPantalla = margen + ((p.getX() - minX) / rangoX) * anchoUtil;
-            // Invertimos Y porque en pantallas la Y crece hacia abajo, pero en mates hacia arriba
-            // (Opcional: puedes quitar el "altoUtil -" si prefieres el sistema de pantalla normal)
+            // Invertimos Y porque en pantallas la Y crece hacia abajo, pero en mates hacia
+            // arriba
+            // (Opcional: puedes quitar el "altoUtil -" si prefieres el sistema de pantalla
+            // normal)
             double yPantalla = margen + (altoUtil - ((p.getY() - minY) / rangoY) * altoUtil);
 
             gc.fillOval(xPantalla - radioPunto, yPantalla - radioPunto, radioPunto * 2, radioPunto * 2);
@@ -303,7 +305,7 @@ btnGrafica.setOnAction(e -> menuSeleccionGrafica(stage));
                 int idx = camino[i];
                 if (idx >= 0 && idx < puntosDataset.size()) {
                     Punto p = puntosDataset.get(idx);
-                    
+
                     double x = margen + ((p.getX() - minX) / rangoX) * anchoUtil;
                     double y = margen + (altoUtil - ((p.getY() - minY) / rangoY) * altoUtil);
 
@@ -316,7 +318,7 @@ btnGrafica.setOnAction(e -> menuSeleccionGrafica(stage));
                     }
                 }
             }
-            
+
             // IMPORTANTE: Cerrar el ciclo (volver al inicio)
             gc.lineTo(xInicio, yInicio);
             gc.stroke();
@@ -331,7 +333,7 @@ btnGrafica.setOnAction(e -> menuSeleccionGrafica(stage));
 
         // Usamos un Pane para apilar el Canvas y el Botón
         Pane root = new Pane(canvas, btnVolver);
-        
+
         // Crear la escena
         Scene scene = new Scene(root, ancho, alto);
         stage.setScene(scene);
@@ -536,8 +538,6 @@ btnGrafica.setOnAction(e -> menuSeleccionGrafica(stage));
         stage.setScene(new Scene(layout, 1200, 800));
     }
 
-    
-
     // --- MÉTODO PARA VISUALIZAR LA COMPARACIÓN DE 2 ESTRATEGIAS ---
     /**
      * Muestra una tabla comparativa para dos estrategias específicas a través de
@@ -652,15 +652,16 @@ btnGrafica.setOnAction(e -> menuSeleccionGrafica(stage));
     /**
      * Muestra la tabla con los resultados empíricos de la comparación.
      * * @param stage Ventana actual.
-     * @param tallas Array con las tallas ejecutadas (ej: {500, 1000, ...}).
+     * 
+     * @param tallas  Array con las tallas ejecutadas (ej: {500, 1000, ...}).
      * @param winsUni Array con el conteo de victorias de Unidireccional por talla.
      * @param timeUni Array con el tiempo medio de Unidireccional por talla.
-     * @param winsBi Array con el conteo de victorias de Bidireccional por talla.
-     * @param timeBi Array con el tiempo medio de Bidireccional por talla.
+     * @param winsBi  Array con el conteo de victorias de Bidireccional por talla.
+     * @param timeBi  Array con el tiempo medio de Bidireccional por talla.
      */
-    public void mostrarComparacionUniVsBi(Stage stage, int[] tallas, 
-                                          int[] winsUni, double[] timeUni, 
-                                          int[] winsBi, double[] timeBi) {
+    public void mostrarComparacionUniVsBi(Stage stage, int[] tallas,
+            int[] winsUni, double[] timeUni,
+            int[] winsBi, double[] timeBi) {
 
         Label titulo = new Label("Comparación Empírica: Unidireccional vs Bidireccional");
         titulo.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
@@ -677,27 +678,27 @@ btnGrafica.setOnAction(e -> menuSeleccionGrafica(stage));
         if (tallas != null) {
             for (int i = 0; i < tallas.length; i++) {
                 final int index = i; // Variable final necesaria para la lambda
-                
+
                 // Columna Padre: Talla X
                 TableColumn<FilaEstadistica, String> colTalla = new TableColumn<>("Talla " + tallas[i]);
 
                 // Sub-columna 1: Victorias
                 TableColumn<FilaEstadistica, String> colVictorias = new TableColumn<>("Victorias");
-                colVictorias.setCellValueFactory(cell -> 
-                    new SimpleStringProperty(String.valueOf(cell.getValue().getVictoriasAt(index))));
+                colVictorias.setCellValueFactory(
+                        cell -> new SimpleStringProperty(String.valueOf(cell.getValue().getVictoriasAt(index))));
                 colVictorias.setMinWidth(80);
                 colVictorias.setStyle("-fx-alignment: CENTER;"); // Centrar texto
 
                 // Sub-columna 2: Tiempo Medio
                 TableColumn<FilaEstadistica, String> colTiempo = new TableColumn<>("Tiempo (ms)");
-                colTiempo.setCellValueFactory(cell -> 
-                    new SimpleStringProperty(String.format("%.4f", cell.getValue().getTiempoAt(index))));
+                colTiempo.setCellValueFactory(
+                        cell -> new SimpleStringProperty(String.format("%.4f", cell.getValue().getTiempoAt(index))));
                 colTiempo.setMinWidth(100);
                 colTiempo.setStyle("-fx-alignment: CENTER-RIGHT;"); // Alinear a la derecha
 
                 // Añadir sub-columnas a la columna padre
                 colTalla.getColumns().addAll(colVictorias, colTiempo);
-                
+
                 // Añadir columna padre a la tabla
                 tabla.getColumns().add(colTalla);
             }
@@ -705,9 +706,8 @@ btnGrafica.setOnAction(e -> menuSeleccionGrafica(stage));
 
         // 3. Crear datos y asignarlos a la tabla
         ObservableList<FilaEstadistica> datos = FXCollections.observableArrayList(
-            new FilaEstadistica("Unidireccional", winsUni, timeUni),
-            new FilaEstadistica("Bidireccional", winsBi, timeBi)
-        );
+                new FilaEstadistica("Unidireccional", winsUni, timeUni),
+                new FilaEstadistica("Bidireccional", winsBi, timeBi));
 
         tabla.setItems(datos);
 
@@ -722,6 +722,7 @@ btnGrafica.setOnAction(e -> menuSeleccionGrafica(stage));
         // Ajustar tamaño de escena según contenido
         stage.setScene(new Scene(layout, 1200, 800));
     }
+
     /**
      * Muestra un menú para seleccionar dos algoritmos a comparar y las tallas de
      * ejecución.
@@ -806,7 +807,7 @@ btnGrafica.setOnAction(e -> menuSeleccionGrafica(stage));
         // 3. Botón de Ejecución
         Button btnEjecutar = new Button("Iniciar Simulación");
         btnEjecutar.setStyle("-fx-base: #b6e7c9; -fx-font-weight: bold;");
-        
+
         Label lblStatus = new Label(""); // Feedback visual
 
         btnEjecutar.setOnAction(e -> {
@@ -822,7 +823,8 @@ btnGrafica.setOnAction(e -> menuSeleccionGrafica(stage));
                 int repeticiones = Integer.parseInt(repStr);
                 lblStatus.setText("Simulando... Esto puede tardar.");
 
-                // Usamos Platform.runLater para permitir que la UI se renderice antes de bloquear
+                // Usamos Platform.runLater para permitir que la UI se renderice antes de
+                // bloquear
                 Platform.runLater(() -> {
                     compararUniVsBi(stage, tipo, repeticiones);
                 });
@@ -835,11 +837,14 @@ btnGrafica.setOnAction(e -> menuSeleccionGrafica(stage));
         Button btnVolver = new Button("Volver");
         btnVolver.setOnAction(e -> stage.setScene(crearMenu(stage)));
 
-        layout.getChildren().addAll(title, lblTipo, comboTipo, lblRepeticiones, txtRepeticiones, btnEjecutar, lblStatus, btnVolver);
+        layout.getChildren().addAll(title, lblTipo, comboTipo, lblRepeticiones, txtRepeticiones, btnEjecutar, lblStatus,
+                btnVolver);
         stage.setScene(new Scene(layout, 600, 500));
     }
+
     // --- CLASE AUXILIAR PARA COMPARACIÓN DE 2 ESTRATEGIAS ---
-    // Esta clase almacena arrays de tiempos y calculadas para poder acceder por índice de talla
+    // Esta clase almacena arrays de tiempos y calculadas para poder acceder por
+    // índice de talla
     public static class FilaComparacion {
         private final String estrategia;
         private final double[] tiempos;
@@ -865,7 +870,9 @@ btnGrafica.setOnAction(e -> menuSeleccionGrafica(stage));
             }
         }
 
-        public String getEstrategia() { return estrategia; }
+        public String getEstrategia() {
+            return estrategia;
+        }
 
         public Double getTiempoAt(int index) {
             if (tiempos != null && index >= 0 && index < tiempos.length) {
@@ -881,6 +888,7 @@ btnGrafica.setOnAction(e -> menuSeleccionGrafica(stage));
             return null;
         }
     }
+
     /**
      * Menú para configurar y lanzar la visualización gráfica de un algoritmo.
      */
@@ -896,19 +904,19 @@ btnGrafica.setOnAction(e -> menuSeleccionGrafica(stage));
         Label lblAlg = new Label("Selecciona el algoritmo a visualizar:");
         ComboBox<String> comboAlg = new ComboBox<>();
         comboAlg.getItems().addAll(
-            "Voraz Exhaustivo Unidireccional",
-            "Voraz Exhaustivo Bidireccional",
-            "Voraz Poda Unidireccional",
-            "Voraz Poda Bidireccional"
-        );
+                "Voraz Exhaustivo Unidireccional",
+                "Voraz Exhaustivo Bidireccional",
+                "Voraz Poda Unidireccional",
+                "Voraz Poda Bidireccional");
         comboAlg.getSelectionModel().select(0);
 
         // 2. Selector de Archivo (Opcional, por defecto berlin52)
         Label lblFile = new Label("Dataset: berlin52.tsp (Por defecto)");
         Button btnCargar = new Button("Cargar otro archivo .tsp");
-        // Variable para guardar el archivo seleccionado (usamos un array de 1 elemento para poder modificarlo dentro de la lambda)
+        // Variable para guardar el archivo seleccionado (usamos un array de 1 elemento
+        // para poder modificarlo dentro de la lambda)
         final File[] archivoSeleccionado = { new File("pract2amc/datasets/berlin52.tsp") };
-        
+
         btnCargar.setOnAction(e -> {
             javafx.stage.FileChooser fileChooser = new javafx.stage.FileChooser();
             fileChooser.setTitle("Abrir archivo TSP");
@@ -938,7 +946,7 @@ btnGrafica.setOnAction(e -> menuSeleccionGrafica(stage));
                 // Leer puntos
                 Lector lector = new Lector(file);
                 ArrayList<Punto> puntos = lector.LeePuntos();
-                
+
                 // Ejecutar algoritmo seleccionado
                 Camino resultado = null;
                 switch (algName) {
@@ -957,13 +965,10 @@ btnGrafica.setOnAction(e -> menuSeleccionGrafica(stage));
                 }
 
                 if (resultado != null) {
-                    // Llamar a tu método existente crearGrafica
+                    GeneradorTSP.guardarSolucion(algName+"solucion.tour", resultado, puntos.size());
                     crearGrafica(puntos, resultado, stage);
-                    
-                    // IMPORTANTE: Como crearGrafica reemplaza la escena y no tiene botón "Volver",
-                    // sugerencia: Modifica crearGrafica para añadir un botón o usa la lógica de abajo
-                    // para inyectar un botón de vuelta en la gráfica si es posible.
-                    agregarBotonVolverAGrafica(stage); 
+
+                    agregarBotonVolverAGrafica(stage);
                 }
 
             } catch (Exception ex) {
@@ -986,14 +991,14 @@ btnGrafica.setOnAction(e -> menuSeleccionGrafica(stage));
         if (sceneGrafica != null && sceneGrafica.getRoot() instanceof javafx.scene.Parent) {
             // Intentamos envolver el contenido actual (Chart) en un VBox con el botón
             javafx.scene.Node chartNode = sceneGrafica.getRoot();
-            
+
             Button btnVolver = new Button("Volver a Selección");
             btnVolver.setOnAction(e -> menuSeleccionGrafica(stage));
-            
+
             VBox newRoot = new VBox(10, chartNode, btnVolver);
             newRoot.setAlignment(Pos.CENTER);
             newRoot.setPadding(new Insets(10));
-            
+
             stage.setScene(new Scene(newRoot, 1200, 850));
         }
     }
